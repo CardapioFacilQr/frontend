@@ -1,32 +1,47 @@
-# React + TypeScript + Vite
+# Cardápio Fácil — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Painel do restaurante e página pública do cardápio (React + Vite + PWA).
+Consome a API [cardapio-api](https://api.treifit.com.br/api/docs).
 
-Currently, two official plugins are available:
+## Telas
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+| Rota | Acesso | O que faz |
+|------|--------|-----------|
+| `/entrar`, `/cadastro` | público | Login e cadastro (o cadastro já cria o restaurante) |
+| `/painel` | logado | Lista os cardápios e cria um novo (com arquivo ou só com itens) |
+| `/painel/cardapios/:id` | logado | QR Code (PNG/SVG), título, troca de arquivo, itens e exclusão |
+| `/m/:slug` | público | **Destino do QR Code**: mostra a imagem/PDF e os itens do cardápio |
 
-## React Compiler
+O token JWT fica no `localStorage`; se a API responder 401 (token expirado), o app volta para o login.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Configuração
 
-## Expanding the Oxlint configuration
+| Variável | Onde | Valor |
+|----------|------|-------|
+| `VITE_API_URL` | `.env.production` | `https://api.treifit.com.br` |
+| `VITE_API_URL` | desenvolvimento | vazio (usa o proxy do Vite) |
+| `API_PROXY_TARGET` | só `npm run dev` | backend local, padrão `http://localhost:3000` |
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+No backend, estas variáveis precisam bater com o domínio deste frontend:
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+- `CORS_ORIGIN=https://cardapiofacil.treifit.com.br` (senão o navegador bloqueia as chamadas)
+- `FRONTEND_URL=https://cardapiofacil.treifit.com.br` (o QR Code aponta para `${FRONTEND_URL}/m/<slug>`)
+
+## Desenvolvimento
+
+```bash
+npm install
+# backend rodando em http://localhost:3000 (ver README do cardapio-api)
+npm run dev          # http://localhost:5173 — /api e /uploads vão para o backend pelo proxy
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Para o QR Code abrir o frontend local, rode o backend com `FRONTEND_URL=http://localhost:5173`.
+
+## Build e deploy (Firebase Hosting)
+
+```bash
+npm run build        # usa .env.production -> VITE_API_URL=https://api.treifit.com.br
+firebase deploy --only hosting
+```
+
+O `firebase.json` já reescreve todas as rotas para `index.html`, então `/m/<slug>` funciona ao abrir direto pelo QR Code.
